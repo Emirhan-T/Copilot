@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "viraj"
+version = "0.1.0"
+description = "Route curvature and bend extraction from OpenStreetMap geometry"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=2.2,<3",
+  "scipy>=1.15,<2",
+  "pyproj>=3.7,<4",
+  "matplotlib>=3.10,<4",
+  "folium>=0.19,<1",
+]
+
+[project.optional-dependencies]
+osm = ["osmnx>=2.0,<3"]
+web = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
+dev = ["pytest>=8,<10", "ruff>=0.11,<1", "jsonschema>=4,<5", "httpx>=0.28,<1"]
+
+[project.scripts]
+viraj = "viraj.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+viraj = ["web_static/*", "web_static/vendor/*", "web_static/vendor/images/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100

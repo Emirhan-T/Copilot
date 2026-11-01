@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Viraj analysis v1.1",
+  "type": "object",
+  "required": ["schema_version", "detector", "coordinate_order", "metric_crs", "distance_axis", "curvature_unit", "positive_curvature", "route_length_m", "actual_spacing_m", "config", "quality", "metadata", "bend_count", "bends"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1.1.0"},
+    "detector": {"const": "gaussian_heading_hysteresis"},
+    "coordinate_order": {"const": "longitude,latitude"},
+    "metric_crs": {"type": "string"},
+    "distance_axis": {"const": "original_projected_route_arclength_m"},
+    "curvature_unit": {"const": "1/m"},
+    "positive_curvature": {"const": "left_relative_to_travel"},
+    "route_length_m": {"type": "number", "exclusiveMinimum": 0},
+    "actual_spacing_m": {"type": "number", "exclusiveMinimum": 0},
+    "bend_count": {"type": "integer", "minimum": 0},
+    "config": {
+      "type": "object", "additionalProperties": false,
+      "required": ["spacing_m", "smoothing_m", "polyorder", "radius_threshold_m", "min_length_m", "merge_gap_m", "min_turn_deg", "circle_span_m", "detection_sigma_m", "heading_transition_cap_m", "release_ratio", "opposite_tolerance_deg"],
+      "properties": {
+        "spacing_m": {"type": "number", "exclusiveMinimum": 0},
+        "smoothing_m": {"type": "number", "minimum": 0},
+        "polyorder": {"type": "integer", "minimum": 2},
+        "radius_threshold_m": {"type": "number", "exclusiveMinimum": 0},
+        "min_length_m": {"type": "number", "exclusiveMinimum": 0},
+        "merge_gap_m": {"type": "number", "minimum": 0},
+        "min_turn_deg": {"type": "number", "minimum": 0},
+        "circle_span_m": {"type": "number", "exclusiveMinimum": 0},
+        "detection_sigma_m": {"type": "number", "exclusiveMinimum": 0},
+        "heading_transition_cap_m": {"type": "number", "exclusiveMinimum": 0},
+        "release_ratio": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "opposite_tolerance_deg": {"type": "number", "minimum": 0}
+      }
+    },
+    "quality": {"type": "object"},
+    "metadata": {"type": "object"},
+    "bends": {"type": "array", "items": {"$ref": "#/$defs/bend"}}
+  },
+  "$defs": {
+    "lonlat": {
+      "type": "array", "minItems": 2, "maxItems": 2,
+      "prefixItems": [{"type": "number", "minimum": -180, "maximum": 180}, {"type": "number", "minimum": -90, "maximum": 90}]
+    },
+    "bend": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "start_s_m", "end_s_m", "direction", "min_radius_m", "p50_radius_m", "length_m", "turn_angle_deg", "apex_s_m", "start_index", "end_index", "apex_index", "source_vertex_count", "source_max_segment_m", "geometry_support"],
+      "properties": {
+        "id": {"type": "integer", "minimum": 1},
+        "start_s_m": {"type": "number", "minimum": 0},
+        "end_s_m": {"type": "number", "minimum": 0},
+        "direction": {"enum": ["left", "right"]},
+        "min_radius_m": {"type": "number", "exclusiveMinimum": 0},
+        "p50_radius_m": {"type": "number", "exclusiveMinimum": 0},
+        "length_m": {"type": "number", "exclusiveMinimum": 0},
+        "turn_angle_deg": {"type": "number"},
+        "apex_s_m": {"type": "number", "minimum": 0},
+        "start_index": {"type": "integer", "minimum": 0},
+        "end_index": {"type": "integer", "minimum": 1},
+        "apex_index": {"type": "integer", "minimum": 0},
+        "merged_part_count": {"type": "integer", "minimum": 1},
+        "detection_min_radius_m": {"type": "number", "exclusiveMinimum": 0},
+        "source_vertex_count": {"type": "integer", "minimum": 0},
+        "source_max_segment_m": {"type": "number", "exclusiveMinimum": 0},
+        "geometry_support": {"enum": ["sparse", "multi_vertex"]},
+        "start_lonlat": {"$ref": "#/$defs/lonlat"},
+        "end_lonlat": {"$ref": "#/$defs/lonlat"},
+        "apex_lonlat": {"$ref": "#/$defs/lonlat"}
+      }
+    }
+  }
+}

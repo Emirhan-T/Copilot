@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#172d35">
+  <title>Viraj Lab · Rota test alanı</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23172d35'/%3E%3Cpath d='M12 31V24C12 14 28 24 28 14V9' fill='none' stroke='%23ff9a62' stroke-width='4'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/static/vendor/leaflet.css">
+  <link rel="stylesheet" href="/static/style.css">
+  <script defer src="/static/vendor/leaflet.js"></script>
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="Viraj Lab ana sayfa"><span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 27v-6C9 11 23 21 23 11V5"/><path class="dash" d="M16 27v-6C16 17 16 15 16 11V5"/></svg></span><span>viraj<span class="brand-lab">lab</span></span></a>
+    <div class="header-divider"></div><span class="header-description">Rota test alanı</span>
+    <div class="header-right"><span class="local-tag"><i></i> Yerel çalışma alanı</span><span class="project-tag">BİTİRME PROJESİ</span></div>
+  </header>
+
+  <main class="app-layout">
+    <aside class="sidebar" aria-label="Rota ve test ayarları">
+      <div class="sidebar-heading"><span class="eyebrow">YENİ DENEY</span><h1>Bir rota, tüm virajlar.</h1><p>Rotanı seç, hassasiyeti ayarla ve yolun nasıl kıvrıldığını incele.</p></div>
+      <form id="test-form">
+        <section class="form-section">
+          <div class="section-heading"><h2><span>01</span> Rotanı belirle</h2><button type="button" id="preset" class="text-button">Konya → Ankara</button></div>
+          <div class="endpoint-group">
+            <div class="endpoint-field"><label for="start-coordinates"><span class="point-letter start-letter">A</span> Başlangıç</label><div class="coordinate-row"><input id="start-coordinates" aria-label="Başlangıç koordinatları" autocomplete="off" required value="37.87140, 32.48460" placeholder="Enlem, boylam"><button type="button" id="pick-start" class="pick-button" title="Haritadan başlangıç seç" aria-label="Haritadan başlangıç seç"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button></div></div>
+            <div class="swap-row"><span class="connector"></span><button type="button" id="swap" title="Başlangıç ve bitişi değiştir" aria-label="Başlangıç ve bitişi değiştir">⇅</button></div>
+            <div class="endpoint-field"><label for="end-coordinates"><span class="point-letter end-letter">B</span> Bitiş</label><div class="coordinate-row"><input id="end-coordinates" aria-label="Bitiş koordinatları" autocomplete="off" required value="39.93340, 32.85970" placeholder="Enlem, boylam"><button type="button" id="pick-end" class="pick-button" title="Haritadan bitiş seç" aria-label="Haritadan bitiş seç"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg></button></div></div>
+          </div>
+          <p class="field-hint">Enlem, boylam yaz veya <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6"/><path d="M12 2v4m0 12v4M2 12h4m12 0h4"/></svg> ile haritadan seç. Noktaları sürükleyebilirsin.</p>
+        </section>
+
+        <section class="form-section sensitivity-section">
+          <h2><span>02</span> Dönüş açısını ayarla</h2>
+          <div class="angle-heading"><label for="min-angle">Minimum toplam dönüş</label><div class="angle-input"><input id="min-angle" name="min_turn_deg" type="number" min="0.05" max="180" step="0.05" value="0.5" required aria-describedby="angle-help"><span>°</span></div></div>
+          <input id="angle-slider" class="angle-slider" type="range" min="0.05" max="15" step="0.05" value="0.5" aria-label="Minimum toplam dönüş açısı kaydırıcısı">
+          <div class="range-labels"><span>Daha hassas</span><span>Daha belirgin</span></div>
+          <div class="angle-presets" aria-label="Hazır açı değerleri"><button type="button" data-angle="0.25">0,25°</button><button type="button" class="active" data-angle="0.5">0,5°</button><button type="button" data-angle="1">1°</button><button type="button" data-angle="3">3°</button><button type="button" data-angle="5">5°</button></div>
+          <p id="angle-help" class="field-hint">Virajın başından sonuna kadar biriken yön değişimi. Değer küçüldükçe hafif virajlar da listeye girer.</p>
+        </section>
+
+        <details class="advanced"><summary>Diğer test ayarları <span>+</span></summary><div class="advanced-grid">
+          <label>Birleştirme boşluğu <div class="unit-input"><input id="merge-gap" type="number" min="0" max="1000" step="5" value="100" required><span>m</span></div></label>
+          <label>Minimum uzunluk <div class="unit-input"><input id="min-length" type="number" min="5" max="500" step="1" value="15" required><span>m</span></div></label>
+          <label>Tespit yumuşatması <div class="unit-input"><input id="detection-sigma" type="number" min="5" max="100" step="1" value="20" required><span>m</span></div></label>
+          <label>Ters dönüş toleransı <div class="unit-input"><input id="opposite-tolerance" type="number" min="0" max="5" step="0.05" value="0.15" required><span>°</span></div></label>
+          <label>En geniş tespit yarıçapı <div class="unit-input"><input id="radius-threshold" type="number" min="50" max="1000000" step="50" value="50000" required><span>m</span></div></label>
+          <label>Örnekleme aralığı <div class="unit-input"><input id="spacing" type="number" min="2.5" max="25" step="2.5" value="5" required><span>m</span></div></label>
+          <label>Yarıçap yumuşatması <div class="unit-input"><input id="smoothing" type="number" min="0" max="200" step="5" value="45" required><span>m</span></div></label>
+          <button type="button" class="reset-button" id="reset-settings">Varsayılana dön ↺</button>
+        </div><p class="field-hint">Aynı yönlü adayların arası kısa ve ters dönüş küçükse parçalar birleştirilir.</p></details>
+
+        <div class="run-section"><button id="run" type="submit" class="primary-button"><span class="run-icon">↗</span><span id="run-label">Rotayı analiz et</span><span class="spinner" aria-hidden="true"></span></button><p class="run-note">Açı değişikliklerinde aynı rota geometrisi kullanılır.</p></div>
+      </form>
+      <div id="status" class="status" role="status" aria-live="polite"><i></i><span>Test alanı hazırlanıyor…</span></div>
+      <div id="error" class="error" role="alert" hidden></div>
+      <div class="method-note"><span class="note-icon">i</span><p>Yol geometrisinden yaklaşık tahmin. Kavşak dönüşleri de adaylara dahildir; fiziksel yarıçap doğrulaması bekliyor.</p></div>
+    </aside>
+
+    <section class="workspace" aria-label="Analiz sonuçları">
+      <div class="map-section">
+        <div id="map" aria-label="Rota ve viraj haritası"></div>
+        <div class="map-metrics" aria-live="polite"><div><span class="metric-caption">ROTA UZUNLUĞU</span><strong id="route-length">—<small> km</small></strong></div><div><span class="metric-caption">VİRAJ ADAYI</span><strong id="bend-count">—</strong></div><div><span class="metric-caption">BİRLEŞEN ADAY</span><strong id="merge-count">—</strong></div></div>
+        <button id="fit-route" class="map-action" type="button" aria-label="Rotanın tamamını göster" title="Rotanın tamamını göster"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>Tüm rota</span></button>
+        <div id="pick-hint" class="pick-hint" hidden><span id="pick-hint-text">Haritadan başlangıç noktasını seç</span><button type="button" id="cancel-pick" aria-label="Nokta seçimini iptal et">×</button></div>
+        <div class="map-legend"><span><i class="left-dot"></i> Sol viraj</span><span><i class="right-dot"></i> Sağ viraj</span><small>Gidiş yönüne göre</small></div>
+        <div id="selected-bend" class="selected-bend" hidden></div>
+      </div>
+
+      <section class="results-panel">
+        <div class="results-toolbar"><div class="tabs" role="tablist" aria-label="Sonuç görünümü"><button id="list-tab" type="button" role="tab" aria-selected="true" aria-controls="list-panel" class="active">Viraj listesi <span id="list-count">0</span></button><button id="chart-tab" type="button" role="tab" aria-selected="false" aria-controls="chart-panel">Eğrilik grafiği</button></div><div class="exports"><button id="download-json" type="button" disabled>JSON ↓</button><button id="download-geojson" type="button" disabled>GeoJSON ↓</button><button id="download-csv" type="button" disabled>CSV ↓</button></div></div>
+        <div id="list-panel" class="result-tab" role="tabpanel" aria-labelledby="list-tab"><div class="list-toolbar"><p id="result-meta">İlk deneyini başlat.</p><label class="direction-filter"><span>Yön</span><select id="direction"><option value="all">Tümü</option><option value="left">Sol</option><option value="right">Sağ</option></select></label></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Yön</th><th>Rota konumu</th><th>Toplam dönüş</th><th>Uzunluk</th><th>Min. yarıçap ≈</th><th>Birleşim</th></tr></thead><tbody id="bend-rows"></tbody></table><div id="empty-state" class="empty-state"><span>⌁</span><p>Yolun kıvrımlarını keşfet.</p><small>Bir rota seç ve analizi çalıştır.</small></div></div></div>
+        <div id="chart-panel" class="result-tab chart-panel" role="tabpanel" aria-labelledby="chart-tab" hidden><div class="chart-toolbar"><span><i class="left-dot"></i> Pozitif: sol <i class="right-dot"></i> Negatif: sağ</span><label><input type="checkbox" id="show-radius-signal"> Yarıçap hesabını da göster</label><span id="chart-scope">Tüm rota · eğrilik (1/m)</span></div><div class="chart-wrap"><canvas id="curvature-chart" role="img" aria-label="Rota boyunca işaretli eğrilik grafiği"></canvas><div id="chart-tooltip" class="chart-tooltip" hidden></div></div></div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

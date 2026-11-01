@@ -43,7 +43,7 @@ def request_route(client):
 def test_workbench_page_assets_and_defaults(workbench):
     client, _, _ = workbench
     page = client.get("/")
-    assert page.status_code == 200 and "Viraj Lab" in page.text
+    assert page.status_code == 200 and "Copilot" in page.text
     for path in ("/static/app.js", "/static/style.css", "/static/vendor/leaflet.js"):
         assert client.get(path).status_code == 200
     defaults = client.get("/api/defaults").json()

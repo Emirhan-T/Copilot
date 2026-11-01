@@ -5,7 +5,7 @@ if not exist ".venv\Scripts\python.exe" (
   pause
   exit /b 1
 )
-echo Viraj Lab: http://127.0.0.1:8766
+echo Copilot: http://127.0.0.1:8766
 echo Sunucuyu kapatmak icin Ctrl+C.
-".venv\Scripts\python.exe" -m viraj serve --port 8766
+".venv\Scripts\copilot.exe" serve --port 8766
 pause

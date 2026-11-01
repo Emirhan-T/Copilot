@@ -1,4 +1,4 @@
-/* Viraj Lab: map-based routing and angle experiments on the Python analysis core. */
+/* Copilot: map-based routing and angle experiments on the Python analysis core. */
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
@@ -349,14 +349,14 @@
     const link = document.createElement("a"); link.href = url; link.download = filename;
     document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  $("download-json").addEventListener("click", () => state.analysis && saveFile(JSON.stringify(state.analysis.summary, null, 2), "viraj-analysis.json"));
-  $("download-geojson").addEventListener("click", () => state.analysis && saveFile(JSON.stringify(state.analysis.geojson), "viraj-bends.geojson", "application/geo+json"));
+  $("download-json").addEventListener("click", () => state.analysis && saveFile(JSON.stringify(state.analysis.summary, null, 2), "copilot-analysis.json"));
+  $("download-geojson").addEventListener("click", () => state.analysis && saveFile(JSON.stringify(state.analysis.geojson), "copilot-bends.geojson", "application/geo+json"));
   $("download-csv").addEventListener("click", async () => {
     if (!state.analysis) return;
     try {
       const response = await fetch(`/api/analyses/${state.analysis.analysis_id}/samples.csv`);
       if (!response.ok) throw new Error("Örnekler indirilemedi. Analizi yeniden çalıştır.");
-      saveFile(await response.text(), "viraj-samples.csv", "text/csv;charset=utf-8");
+      saveFile(await response.text(), "copilot-samples.csv", "text/csv;charset=utf-8");
     } catch (error) { showError(error.message); }
   });
   $("test-form").addEventListener("submit", run);

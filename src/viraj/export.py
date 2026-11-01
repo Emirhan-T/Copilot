@@ -194,12 +194,12 @@ def draw_map(analysis, path, chart_path, comparison=None):
         [np.min(coords, axis=0).tolist(), np.max(coords, axis=0).tolist()], padding=(32, 32)
     )
     title = html.escape(str(analysis.metadata.get("title", "Rota analizi")))
-    m.get_root().header.add_child(Element(f"<title>Viraj · {title}</title>"))
+    m.get_root().header.add_child(Element(f"<title>Copilot · {title}</title>"))
     provider = html.escape(str(analysis.metadata.get("provider", "GeoJSON")))
     image_data = base64.b64encode(Path(chart_path).read_bytes()).decode()
     panel = f"""
     <aside id="panel">
-      <div class="eyebrow">VİRAJ / ARAŞTIRMA PROTOTİPİ</div>
+      <div class="eyebrow">COPILOT / ARAŞTIRMA PROTOTİPİ</div>
       <h1>{title}</h1><p class="subtitle">Rota geometrisinden yaklaşık viraj analizi</p>
       <div class="stats"><div><b>{analysis.s[-1] / 1000:.1f}</b><small>km rota</small></div>
       <div><b>{len(analysis.bends)}</b><small>viraj adayı</small></div>

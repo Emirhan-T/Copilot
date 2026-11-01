@@ -1,4 +1,4 @@
-"""viraj demo | analyze | route | validate | sensitivity."""
+"""copilot demo | analyze | route | validate | sensitivity | serve."""
 
 import argparse
 import json
@@ -62,7 +62,7 @@ def add_config(parser):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="OSM rota geometrisinden yaklaşık viraj analizi")
+    parser = argparse.ArgumentParser(description="Copilot · OSM rota geometrisinden yaklaşık viraj analizi")
     sub = parser.add_subparsers(dest="command", required=True)
     serve = sub.add_parser("serve", help="Open the local route and angle test workbench")
     serve.add_argument("--port", type=int, default=8766)

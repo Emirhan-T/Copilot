@@ -110,7 +110,7 @@ def samples_csv(analysis):
 def create_app(
     *, cache_dir="cache", route_fetcher=None, osrm_url="https://router.project-osrm.org"
 ):
-    app = FastAPI(title="Viraj Lab", version="0.1.0")
+    app = FastAPI(title="Copilot", version="0.1.0")
     app.add_middleware(
         TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "[::1]", "testserver"]
     )
@@ -248,7 +248,7 @@ def create_app(
         return StreamingResponse(
             samples_csv(cached[0]),
             media_type="text/csv; charset=utf-8",
-            headers={"Content-Disposition": 'attachment; filename="viraj-samples.csv"'},
+            headers={"Content-Disposition": 'attachment; filename="copilot-samples.csv"'},
         )
 
     @app.get("/api/analyses/{identifier}/signals")
@@ -277,5 +277,5 @@ def create_app(
 def run_server(*, port=8766, cache_dir="cache", osrm_url="https://router.project-osrm.org"):
     import uvicorn
 
-    print(f"Viraj Lab: http://127.0.0.1:{port}")
+    print(f"Copilot: http://127.0.0.1:{port}")
     uvicorn.run(create_app(cache_dir=cache_dir, osrm_url=osrm_url), host="127.0.0.1", port=port)

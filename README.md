@@ -1,21 +1,21 @@
-# Viraj — bitirme projesi, aşama 1
+# Copilot — bitirme projesi, aşama 1
 
 İki nokta arasındaki OSM rota geometrisinden **yaklaşık viraj adayları** çıkaran
 Python prototipi. Mobil istemcinin tüketeceği JSON/GeoJSON sözleşmesi hazırdır.
 Mobil uygulama ve canlı GPS takibi sonraki aşamalardır. Test arayüzünün yerel
 servis API'si bu projeye eklendi.
 
-## Viraj Lab — etkileşimli test sayfası
+## Copilot — etkileşimli test sayfası
 
 Rota seçimi ve parametre deneyleri için yerel web arayüzü hazırdır. Mevcut
 Python çekirdeğini kullanır; web ve CLI aynı ayarlarda aynı adayları döndürür.
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -e ".[web,dev]"
-.\.venv\Scripts\python.exe -m viraj serve --port 8766
+.\.venv\Scripts\copilot.exe serve --port 8766
 ```
 
-Tarayıcıda [Viraj Lab](http://127.0.0.1:8766) adresini aç. Sonraki açılışlarda
+Tarayıcıda [Copilot](http://127.0.0.1:8766) adresini aç. Sonraki açılışlarda
 `start-lab.cmd` dosyasını çift tıklayarak da çalıştırabilirsin. Sunucu bu
 bilgisayarda `127.0.0.1` adresinde çalışır; internet yayını yapılmaz.
 
@@ -91,7 +91,7 @@ Python 3.11+ gerekir; bu çalışma Windows / Python 3.14 ile doğrulandı.
 ```powershell
 py -3 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -e ".[dev,osm]"
-.\.venv\Scripts\python.exe -m viraj demo
+.\.venv\Scripts\copilot.exe demo
 Start-Process .\outputs\konya-ankara\map.html
 ```
 
@@ -101,20 +101,20 @@ ve CDN kütüphaneleri internet gerektirir; PNG grafikleri çevrimdışı açıl
 
 ```powershell
 # Kayıtlı geometriyle yeniden analiz; yeni rota isteği yapmaz.
-.\.venv\Scripts\python.exe -m viraj analyze outputs/konya-ankara/route_input.geojson --smoothing 65 --out outputs/konya-ankara-65
+.\.venv\Scripts\copilot.exe analyze outputs/konya-ankara/route_input.geojson --smoothing 65 --out outputs/konya-ankara-65
 
 # Bildirilen eksik virajı işaretle ve önceki tespit katmanını ekle.
-.\.venv\Scripts\python.exe -m viraj analyze outputs/konya-ankara/route_input.geojson --out outputs/konya-ankara --compare-to outputs/konya-ankara-v1/bends.geojson --check-point 32.73005 38.10124
+.\.venv\Scripts\copilot.exe analyze outputs/konya-ankara/route_input.geojson --out outputs/konya-ankara --compare-to outputs/konya-ankara-v1/bends.geojson --check-point 32.73005 38.10124
 
 # Her giriş ve GeoJSON için sıra: BOYLAM ENLEM.
-.\.venv\Scripts\python.exe -m viraj route --start 32.4846 37.8714 --end 32.8597 39.9334 --out outputs/rota
+.\.venv\Scripts\copilot.exe route --start 32.4846 37.8714 --end 32.8597 39.9334 --out outputs/rota
 
 # Yerel, kısa OSMnx denemesi: yönlü yol ağı üzerinde uzunluğu en az olan yol.
-.\.venv\Scripts\python.exe -m viraj route --provider osmnx --start 32.4846 37.8714 --end 32.4910 37.8780 --buffer 1000 --out outputs/osmnx-konya
+.\.venv\Scripts\copilot.exe route --provider osmnx --start 32.4846 37.8714 --end 32.4910 37.8780 --buffer 1000 --out outputs/osmnx-konya
 
 # Yapay yollar, iki yöntem ve parametre hassasiyeti.
-.\.venv\Scripts\python.exe -m viraj validate
-.\.venv\Scripts\python.exe -m viraj sensitivity outputs/konya-ankara/route_input.geojson --out outputs/konya-ankara
+.\.venv\Scripts\copilot.exe validate
+.\.venv\Scripts\copilot.exe sensitivity outputs/konya-ankara/route_input.geojson --out outputs/konya-ankara
 .\.venv\Scripts\python.exe -m pytest -q
 .\.venv\Scripts\python.exe -m ruff check src tests
 ```
@@ -199,7 +199,8 @@ eğrilik 1/metre, açılar derecedir. GeoJSON koordinatları WGS84'tür.
 `merged_part_count` birleştirilen tespit parçalarının sayısını verir. Parçalar
 zayıf devam eşiğiyle zaten bağlıysa bu sayı 1 olabilir.
 
-Python çekirdeği rota sağlayıcısından bağımsızdır:
+Python çekirdeği rota sağlayıcısından bağımsızdır. Dağıtım ve komut adı `copilot`;
+mevcut Python modülü `viraj` ve eski `viraj` komut takma adı uyumluluk için korunur:
 
 ```python
 from viraj import Config, analyze_lonlat

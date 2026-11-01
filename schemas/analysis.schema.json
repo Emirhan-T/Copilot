@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Viraj analysis v1.1",
+  "title": "Copilot analysis v1.1",
   "type": "object",
   "required": ["schema_version", "detector", "coordinate_order", "metric_crs", "distance_axis", "curvature_unit", "positive_curvature", "route_length_m", "actual_spacing_m", "config", "quality", "metadata", "bend_count", "bends"],
   "additionalProperties": false,

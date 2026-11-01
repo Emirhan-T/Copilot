@@ -69,7 +69,7 @@ def fetch_osrm(start, end, *, base_url="https://router.project-osrm.org", cache_
         payload, fetched_at = cached["response"], cached["fetched_at_utc"]
     else:
         request = Request(
-            url, headers={"User-Agent": "VirajResearchPrototype/0.1", "Accept": "application/json"}
+            url, headers={"User-Agent": "CopilotRoadResearch/0.1", "Accept": "application/json"}
         )
         try:
             with urlopen(request, timeout=90) as response:

@@ -1,4 +1,4 @@
-"""Viraj: metric route geometry analysis, independent of the routing provider."""
+"""Copilot: metric route geometry analysis, independent of the routing provider."""
 
 from .core import Analysis, Config, analyze_lonlat, analyze_xy
 

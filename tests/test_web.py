@@ -166,3 +166,34 @@ def test_local_api_rejects_cross_origin_mutation(workbench):
         json={"start": {"lat": 38, "lon": 32}, "end": {"lat": 39, "lon": 33}},
     )
     assert response.status_code == 403 and not calls
+
+
+def test_api_returns_speed_layer_and_validates_speed_settings(workbench):
+    from viraj.speed import SpeedConfig, assess_speeds
+
+    client, coords, calls = workbench
+    route_id = request_route(client)
+    defaults = client.get("/api/defaults").json()["speed_config"]
+    assert defaults["approach_speed_kmh"] == SpeedConfig().approach_speed_kmh
+    data = client.post("/api/analyze", json={"route_id": route_id}).json()
+    expected = analyze_lonlat(coords)
+    assert data["summary"]["speed"] == assess_speeds(expected, SpeedConfig())
+    slow = client.post(
+        "/api/analyze", json={"route_id": route_id, "speed": {"approach_speed_kmh": 30}}
+    ).json()
+    assert slow["summary"]["speed"]["series_count"] <= data["summary"]["speed"]["series_count"]
+    assert len(calls) == 1
+    bad = client.post("/api/analyze", json={"route_id": route_id, "speed": {"superelevation": 0.5}})
+    assert bad.status_code == 422
+
+
+def test_api_returns_drive_track_along_route(workbench):
+    client, _coords, _calls = workbench
+    route_id = request_route(client)
+    data = client.post("/api/analyze", json={"route_id": route_id}).json()
+    track = data["track"]
+    assert len(track["s"]) == len(track["lonlat"]) >= 2
+    assert track["s"][0] == 0 and track["s"][-1] == pytest.approx(
+        data["summary"]["route_length_m"], abs=0.1
+    )
+    assert all(b > a for a, b in zip(track["s"], track["s"][1:], strict=False))

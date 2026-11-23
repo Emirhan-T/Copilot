@@ -61,10 +61,15 @@ class Analysis:
     lonlat: np.ndarray | None
     quality: dict
     metadata: dict = field(default_factory=dict)
+    # Projected source vertices (before resampling); used for circle fits.
+    source_xy: np.ndarray | None = None
+    # Optional speed layer, filled by viraj.speed.assess_speeds.
+    speed: dict | None = None
+    speed_profile: object | None = None
 
     def summary(self) -> dict:
-        return {
-            "schema_version": "1.1.0",
+        payload = {
+            "schema_version": "1.2.0",
             "detector": "gaussian_heading_hysteresis",
             "coordinate_order": "longitude,latitude",
             "metric_crs": self.crs,
@@ -79,6 +84,9 @@ class Analysis:
             "bend_count": len(self.bends),
             "bends": self.bends,
         }
+        if self.speed is not None:
+            payload["speed"] = self.speed
+        return payload
 
 
 def clean_points(points) -> np.ndarray:
@@ -380,6 +388,7 @@ def analyze_xy(points, config=None, *, crs="local_metric", inverse=None, metadat
         lonlat,
         quality,
         metadata or {},
+        source_xy=source,
     )
 
 

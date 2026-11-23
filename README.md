@@ -46,6 +46,40 @@ Web API: `POST /api/routes` → `POST /api/analyze`. Başlangıç/bitiş gövdes
 analiz gövdesi `{"route_id":"...","config":{"min_turn_deg":0.5}}`.
 `GET /docs` yerel API sözleşmesini gösterir.
 
+## Hedef hız ve uyarı mesafesi (aşama 2)
+
+Her viraj adayına fizik tabanlı bir hedef hız hesaplanır. Hedef hızı yaklaşma
+hızının en az 8 km/s altında kalan virajlardan rota boyunca bir **izin verilen hız
+profili** çıkarılır. Yakın virajlar tek bir **uyarı serisinde** toplanır. Canlı
+kullanımda uyarı **yalnızca GPS hızı izin verilen hızı aşıyorsa** çalar
+(`OverspeedMonitor`). Tespit değişmez; 383 aday haritada kalır.
+
+- Hedef hız: `v² = g·R·(e + f(v))`, `f` AASHTO 2018 Tablo 3-7 yanal sürtünme
+  katsayısı (konfor sınırı, lastik tutunması değil). Dever `e` OSM'de yok; varsayılan 0.
+- Hız yarıçapı: virajın çekirdeğindeki yön değişimi; çekirdekte ≥4 OSM noktası
+  varsa çember uydurmayla temkinli tarafta karşılaştırılır. `min_radius_m` ve
+  `p50_radius_m` hız için kullanılmaz (p50 yumuşatmayla 2,16× değişiyor).
+- Profil: sondan başa fren zarfı `v(s) = min(sınır, √(v(s+ds)² + 2·3,4·ds))`;
+  tepki süresi 2,5 s.
+- Konya–Ankara, 90 km/s, e=0: 39 yavaşlama virajı → **22 uyarı serisi**
+  (Ankara girişindeki 4 viraj tek uyarı: "4 viraj arka arkaya (230 m): en düşük 35 km/s").
+
+```powershell
+.\.venv\Scripts\copilot.exe analyze outputs/konya-ankara/route_input.geojson --out outputs/konya-ankara-hiz --approach-speed 90 --superelevation 0
+```
+
+**Sürüş simülasyonu (web):** analizden sonra haritada rota boyunca ilerleyen bir
+araç belirir. Hız çubuğuyla araç hızı anlık değişir. Çubuğun üstündeki ok
+sonraki virajın yönüne ve sertliğine göre şekil alır; yanında viraja kalan
+mesafe ve virajın güvenli hızı (tavansız fiziksel üst sınır) gösterilir. Hız
+aşılırsa "YAVAŞLA" uyarısı çıkar. Oynat/duraklat, konum çubuğu, 1–60× zaman
+çarpanı ve haritanın aracı takip etmesi seçenekleri vardır.
+
+Diğer seçenekler: `--reaction-time`, `--deceleration`, `--warning-margin`, `--no-speed`.
+Web test sayfasında **Hız uyarısı** bölümü ve "Sadece uyarılar" filtresi vardır.
+Yöntem, kaynaklar, yapay yay doğrulaması ve sınırlar:
+[docs/speed-model.md](docs/speed-model.md).
+
 ## Güncel demo: Konya → Ankara
 
 - Yaklaşık şehir merkezi noktaları: `[32.4846, 37.8714]` → `[32.8597, 39.9334]`.
@@ -190,8 +224,9 @@ ham yoldaki düzleşme uzunluğundan farklı olabilir. Minimum toplam açıyı �
 
 ## Çıktı sözleşmesi ve mobil bağlantı
 
-[schemas/analysis.schema.json](schemas/analysis.schema.json) v1.1 şemasını tanımlar;
-eski sözleşme `schemas/analysis-v1.0.schema.json` altında saklıdır.
+[schemas/analysis.schema.json](schemas/analysis.schema.json) v1.2 şemasını tanımlar;
+v1.2, v1.1'e isteğe bağlı üst düzey `speed` bloğunu ekler (viraj nesneleri değişmedi).
+Eski sözleşmeler `schemas/analysis-v1.1.schema.json` ve `schemas/analysis-v1.0.schema.json` altındadır.
 Her aday `start_s_m`, `end_s_m`, `direction`, `min_radius_m`, `p50_radius_m`,
 `length_m`, `turn_angle_deg`, tepe noktasının `apex_s_m` / `apex_lonlat` konumu,
 uç koordinatları ve kaynak geometri desteğini taşır. Tüm mesafeler metre,

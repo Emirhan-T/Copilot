@@ -8,6 +8,7 @@ from pathlib import Path
 from .core import Config, analyze_lonlat
 from .export import export_analysis
 from .routing import ANKARA, KONYA, fetch_osmnx, fetch_osrm, load_route, save_route
+from .speed import SpeedConfig, assess_speeds
 
 
 def add_config(parser):
@@ -61,6 +62,32 @@ def add_config(parser):
     )
 
 
+def add_speed_config(parser):
+    defaults = SpeedConfig()
+    group = parser.add_argument_group("hız uyarısı")
+    group.add_argument(
+        "--approach-speed",
+        type=float,
+        default=defaults.approach_speed_kmh,
+        help="Assumed approach speed (km/h); TR two-way intercity car limit is 90",
+    )
+    group.add_argument(
+        "--superelevation",
+        type=float,
+        default=defaults.superelevation,
+        help="Assumed superelevation e (m/m); unknown in OSM, 0 is conservative",
+    )
+    group.add_argument("--reaction-time", type=float, default=defaults.reaction_time_s)
+    group.add_argument("--deceleration", type=float, default=defaults.deceleration_mps2)
+    group.add_argument(
+        "--warning-margin",
+        type=float,
+        default=defaults.warning_margin_kmh,
+        help="Warn when target speed is at least this much below approach speed (km/h)",
+    )
+    group.add_argument("--no-speed", action="store_true", help="Skip the speed layer")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Copilot · OSM rota geometrisinden yaklaşık viraj analizi")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -99,6 +126,8 @@ def main(argv=None):
     validate.add_argument("--out", default="outputs/validation")
     for p in (demo, route, analyze, validate, sensitivity):
         add_config(p)
+    for p in (demo, route, analyze):
+        add_speed_config(p)
     args = parser.parse_args(argv)
     try:
         if args.command == "serve":
@@ -147,6 +176,17 @@ def main(argv=None):
             print(f"Sensitivity report: {Path(args.out).resolve()}")
             return 0
         analysis = analyze_lonlat(coords, config, metadata=metadata)
+        if not args.no_speed:
+            assess_speeds(
+                analysis,
+                SpeedConfig(
+                    approach_speed_kmh=args.approach_speed,
+                    superelevation=args.superelevation,
+                    reaction_time_s=args.reaction_time,
+                    deceleration_mps2=args.deceleration,
+                    warning_margin_kmh=args.warning_margin,
+                ),
+            )
         if analysis.metadata.get("review_points") or (
             args.command == "analyze" and args.check_point
         ):
@@ -171,6 +211,12 @@ def main(argv=None):
         folder = export_analysis(analysis, args.out, comparison=comparison)
         save_route(folder / "route_input.geojson", coords, metadata)
         print(f"Route: {analysis.s[-1] / 1000:.2f} km; bend candidates: {len(analysis.bends)}")
+        if analysis.speed is not None:
+            print(
+                f"Slowdown bends: {analysis.speed['slowdown_bend_count']}; "
+                f"warning series: {analysis.speed['series_count']} "
+                f"(approach {args.approach_speed:g} km/h, e={args.superelevation:g})"
+            )
         print(f"Report: {(folder / 'map.html').resolve()}")
         return 0
     except (ValueError, OSError, KeyError) as exc:

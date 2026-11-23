@@ -41,6 +41,13 @@
           <p id="angle-help" class="field-hint">Virajın başından sonuna kadar biriken yön değişimi. Değer küçüldükçe hafif virajlar da listeye girer.</p>
         </section>
 
+        <details class="advanced" open><summary>Hız uyarısı <span>+</span></summary><div class="advanced-grid">
+          <label>Referans hız <div class="unit-input"><input id="approach-speed" type="number" min="20" max="150" step="5" value="90" required><span>km/s</span></div></label>
+          <label>Varsayılan dever (e) <div class="unit-input"><input id="superelevation" type="number" min="0" max="0.12" step="0.01" value="0" required><span>m/m</span></div></label>
+          <label>Tepki süresi <div class="unit-input"><input id="reaction-time" type="number" min="0.5" max="5" step="0.1" value="2.5" required><span>s</span></div></label>
+          <label>Yavaşlama <div class="unit-input"><input id="deceleration" type="number" min="1" max="8" step="0.1" value="3.4" required><span>m/s²</span></div></label>
+        </div><p class="field-hint">Hedef hız v² = g·R·(e + f(v)), f: AASHTO yanal sürtünme tablosu. Her virajın hedef hızı kendi fiziksel üst sınırıdır (tavan yok). Referans hız yalnızca listede “yavaşlama gerektiren” virajları ve serileri belirler. Dever OSM'de yok; 0 temkinli varsayımdır.</p></details>
+
         <details class="advanced"><summary>Diğer test ayarları <span>+</span></summary><div class="advanced-grid">
           <label>Birleştirme boşluğu <div class="unit-input"><input id="merge-gap" type="number" min="0" max="1000" step="5" value="100" required><span>m</span></div></label>
           <label>Minimum uzunluk <div class="unit-input"><input id="min-length" type="number" min="5" max="500" step="1" value="15" required><span>m</span></div></label>
@@ -62,16 +69,47 @@
     <section class="workspace" aria-label="Analiz sonuçları">
       <div class="map-section">
         <div id="map" aria-label="Rota ve viraj haritası"></div>
-        <div class="map-metrics" aria-live="polite"><div><span class="metric-caption">ROTA UZUNLUĞU</span><strong id="route-length">—<small> km</small></strong></div><div><span class="metric-caption">VİRAJ ADAYI</span><strong id="bend-count">—</strong></div><div><span class="metric-caption">BİRLEŞEN ADAY</span><strong id="merge-count">—</strong></div></div>
+        <div class="map-metrics" aria-live="polite"><div><span class="metric-caption">ROTA UZUNLUĞU</span><strong id="route-length">—<small> km</small></strong></div><div><span class="metric-caption">VİRAJ ADAYI</span><strong id="bend-count">—</strong></div><div><span class="metric-caption">BİRLEŞEN ADAY</span><strong id="merge-count">—</strong></div><div><span class="metric-caption">UYARI SERİSİ</span><strong id="warning-count">—</strong></div></div>
         <button id="fit-route" class="map-action" type="button" aria-label="Rotanın tamamını göster" title="Rotanın tamamını göster"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg><span>Tüm rota</span></button>
         <div id="pick-hint" class="pick-hint" hidden><span id="pick-hint-text">Haritadan başlangıç noktasını seç</span><button type="button" id="cancel-pick" aria-label="Nokta seçimini iptal et">×</button></div>
+        <div id="drive-panel" class="drive-panel" hidden aria-label="Sürüş simülasyonu">
+          <div class="drive-hud" id="drive-hud" data-state="idle">
+            <svg id="drive-arrow" class="drive-arrow" viewBox="0 0 100 100" aria-hidden="true"><path id="drive-arrow-path" d="M50 92 L50 22"/><path id="drive-arrow-head" class="head" d="M40 30 L50 12 L60 30 Z"/></svg>
+            <div class="drive-next">
+              <span class="metric-caption" id="drive-next-label">SONRAKİ VİRAJ</span>
+              <strong id="drive-distance">—</strong>
+              <small id="drive-bend-info">Rota analiz edilince başlar</small>
+            </div>
+            <div class="drive-safe" title="Virajın fiziksel üst sınırı (v² = g·R·(e+f))">
+              <span class="metric-caption">GÜVENLİ HIZ</span>
+              <strong id="drive-safe">—</strong>
+              <small>km/s</small>
+            </div>
+          </div>
+          <p class="drive-alert" id="drive-alert" aria-live="assertive"></p>
+          <div class="drive-speed">
+            <label for="drive-speed">Araç hızı</label>
+            <output id="drive-speed-value" for="drive-speed">90 <small>km/s</small></output>
+          </div>
+          <input id="drive-speed" class="drive-slider" type="range" min="0" max="200" step="5" value="90" aria-label="Araç hızı (km/s)">
+          <div class="drive-controls">
+            <button id="drive-play" type="button" class="drive-play" aria-label="Sürüşü başlat">▶</button>
+            <input id="drive-position" class="drive-position" type="range" min="0" max="1" step="1" value="0" aria-label="Rota üzerindeki konum">
+            <span id="drive-km" class="drive-km">0,0 km</span>
+            <select id="drive-rate" aria-label="Simülasyon hızı" title="Simülasyon zaman çarpanı"><option value="1">1×</option><option value="5">5×</option><option value="20" selected>20×</option><option value="60">60×</option></select>
+            <label class="drive-follow" title="Harita aracı takip etsin"><input id="drive-follow" type="checkbox" checked> Takip</label>
+          </div>
+          <div class="drive-options">
+            <label>Oka dahil viraj: güvenli hızı <select id="drive-threshold"><option value="120">120</option><option value="150" selected>150</option><option value="200">200</option></select> km/s altı</label>
+          </div>
+        </div>
         <div class="map-legend"><span><i class="left-dot"></i> Sol viraj</span><span><i class="right-dot"></i> Sağ viraj</span><small>Gidiş yönüne göre</small></div>
         <div id="selected-bend" class="selected-bend" hidden></div>
       </div>
 
       <section class="results-panel">
         <div class="results-toolbar"><div class="tabs" role="tablist" aria-label="Sonuç görünümü"><button id="list-tab" type="button" role="tab" aria-selected="true" aria-controls="list-panel" class="active">Viraj listesi <span id="list-count">0</span></button><button id="chart-tab" type="button" role="tab" aria-selected="false" aria-controls="chart-panel">Eğrilik grafiği</button></div><div class="exports"><button id="download-json" type="button" disabled>JSON ↓</button><button id="download-geojson" type="button" disabled>GeoJSON ↓</button><button id="download-csv" type="button" disabled>CSV ↓</button></div></div>
-        <div id="list-panel" class="result-tab" role="tabpanel" aria-labelledby="list-tab"><div class="list-toolbar"><p id="result-meta">İlk deneyini başlat.</p><label class="direction-filter"><span>Yön</span><select id="direction"><option value="all">Tümü</option><option value="left">Sol</option><option value="right">Sağ</option></select></label></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Yön</th><th>Rota konumu</th><th>Toplam dönüş</th><th>Uzunluk</th><th>Min. yarıçap ≈</th><th>Birleşim</th></tr></thead><tbody id="bend-rows"></tbody></table><div id="empty-state" class="empty-state"><span>⌁</span><p>Yolun kıvrımlarını keşfet.</p><small>Bir rota seç ve analizi çalıştır.</small></div></div></div>
+        <div id="list-panel" class="result-tab" role="tabpanel" aria-labelledby="list-tab"><div class="list-toolbar"><p id="result-meta">İlk deneyini başlat.</p><label class="direction-filter"><span>Yön</span><select id="direction"><option value="all">Tümü</option><option value="left">Sol</option><option value="right">Sağ</option><option value="warn">Sadece uyarılar</option></select></label></div><div class="table-scroll"><table><thead><tr><th>No</th><th>Yön</th><th>Rota konumu</th><th>Toplam dönüş</th><th>Uzunluk</th><th>Min. yarıçap ≈</th><th>Hedef hız</th><th>Birleşim</th></tr></thead><tbody id="bend-rows"></tbody></table><div id="empty-state" class="empty-state"><span>⌁</span><p>Yolun kıvrımlarını keşfet.</p><small>Bir rota seç ve analizi çalıştır.</small></div></div></div>
         <div id="chart-panel" class="result-tab chart-panel" role="tabpanel" aria-labelledby="chart-tab" hidden><div class="chart-toolbar"><span><i class="left-dot"></i> Pozitif: sol <i class="right-dot"></i> Negatif: sağ</span><label><input type="checkbox" id="show-radius-signal"> Yarıçap hesabını da göster</label><span id="chart-scope">Tüm rota · eğrilik (1/m)</span></div><div class="chart-wrap"><canvas id="curvature-chart" role="img" aria-label="Rota boyunca işaretli eğrilik grafiği"></canvas><div id="chart-tooltip" class="chart-tooltip" hidden></div></div></div>
       </section>
     </section>

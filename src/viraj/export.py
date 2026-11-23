@@ -144,6 +144,27 @@ def draw_map(analysis, path, chart_path, comparison=None):
             "</span></button>"
         )
     current_layer = folium.FeatureGroup(name="Güncel virajlar", show=True).add_to(m)
+    speeds = {r["bend_id"]: r for r in (analysis.speed or {}).get("bends", [])}
+    warning_layer = None
+    if speeds:
+        warning_layer = folium.FeatureGroup(name="Hız uyarı noktaları", show=True).add_to(m)
+        for item in analysis.speed["series"]:
+            if "trigger_lonlat" not in item:
+                continue
+            lon, lat = item["trigger_lonlat"]
+            folium.CircleMarker(
+                [lat, lon],
+                radius=6,
+                color="#b42318",
+                weight=2,
+                fill=True,
+                fill_color="#ffffff",
+                fill_opacity=1,
+                tooltip=(
+                    f"S{item['id']} · {item['message']} · 90 km/s ile gelen sürücü "
+                    "burada uyarılır (yalnızca hız aşılıyorsa)"
+                ),
+            ).add_to(warning_layer)
     if comparison is not None:
         baseline_layer = folium.FeatureGroup(name="Önceki tespitler (v1)", show=False).add_to(m)
         for feature in comparison.get("features", []):
@@ -157,7 +178,6 @@ def draw_map(analysis, path, chart_path, comparison=None):
                     smooth_factor=0,
                     tooltip=f"Önceki tespit #{feature['properties'].get('id', '')}",
                 ).add_to(baseline_layer)
-        folium.LayerControl(collapsed=False).add_to(m)
     for bend in analysis.bends:
         start, end = bend["start_index"], bend["end_index"]
         direction = "Sol" if bend["direction"] == "left" else "Sağ"
@@ -173,6 +193,21 @@ def draw_map(analysis, path, chart_path, comparison=None):
             else ""
         )
         title += support + merged_note
+        speed = speeds.get(bend["id"])
+        speed_text, speed_cell = "", ""
+        if speed is not None:
+            if speed["requires_slowdown"]:
+                speed_text = (
+                    f" · ⚠ hedef {speed['target_speed_kmh']:.0f} km/s"
+                    f" · seri S{speed['series_id']} (güven: {speed['confidence']})"
+                )
+                speed_cell = (
+                    f'<b class="warn">⚠ {speed["target_speed_kmh"]:.0f} km/s'
+                    f" · S{speed['series_id']}</b>"
+                )
+            else:
+                speed_text = f" · hedef {speed['target_speed_kmh']:.0f} km/s, yavaşlama gerekmez"
+        title += speed_text
         folium.PolyLine(
             coords[start : end + 1],
             color=color,
@@ -188,8 +223,10 @@ def draw_map(analysis, path, chart_path, comparison=None):
             f'<span class="number">{bend["id"]:02}</span>'
             f'<span><b style="color:{color}">{direction} viraj</b>'
             f"<small>{bend['start_s_m'] / 1000:.2f}–{bend['end_s_m'] / 1000:.2f} km{support}{merged_note}</small></span>"
-            f'<span class="radius">≈{bend["min_radius_m"]:.0f}<small>R min · metre</small></span></button>'
+            f'<span class="radius">{speed_cell}≈{bend["min_radius_m"]:.0f}<small>R min · metre</small></span></button>'
         )
+    if comparison is not None or speeds:
+        folium.LayerControl(collapsed=False).add_to(m)
     m.fit_bounds(
         [np.min(coords, axis=0).tolist(), np.max(coords, axis=0).tolist()], padding=(32, 32)
     )
@@ -203,7 +240,7 @@ def draw_map(analysis, path, chart_path, comparison=None):
       <h1>{title}</h1><p class="subtitle">Rota geometrisinden yaklaşık viraj analizi</p>
       <div class="stats"><div><b>{analysis.s[-1] / 1000:.1f}</b><small>km rota</small></div>
       <div><b>{len(analysis.bends)}</b><small>viraj adayı</small></div>
-      <div><b>{analysis.config.spacing_m:g}</b><small>m örnekleme üst sınırı</small></div></div>
+      <div><b>{analysis.speed["series_count"] if analysis.speed else "—"}</b><small>uyarı serisi</small></div></div>
       <div class="legend"><i style="background:#e76f35"></i> Sol
       <i style="background:#2563eb"></i> Sağ <span>Gidiş yönüne göre</span></div>
       {"".join(review_buttons)}
@@ -247,6 +284,7 @@ def draw_map(analysis, path, chart_path, comparison=None):
     .bend {display:flex;align-items:center;width:100%;text-align:left;gap:12px;
       border:0;border-bottom:1px solid #edf0f5;background:#fff;padding:13px 5px;cursor:pointer;
       font-family:inherit;font-size:12px}.bend:hover {background:#f5f8fb}
+    .warn {display:block;color:#b42318;font-size:11px}
     .number {color:#96a2b1;font-size:11px}.radius {margin-left:auto;text-align:right;font-weight:650}
     .review {background:#f5f0ff;border:1px solid #e9ddfb;border-radius:8px;padding:12px;color:#6b21a8}
     .chart {width:100%;border-radius:8px;border:1px solid #edf0f5;margin-top:4px}

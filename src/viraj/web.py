@@ -19,6 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from .core import Config, analyze_lonlat
 from .export import geojson
 from .routing import ANKARA, KONYA, fetch_osrm
+from .speed import SpeedConfig, assess_speeds
 
 
 class Point(BaseModel):
@@ -48,10 +49,19 @@ class WebConfig(BaseModel):
     opposite_tolerance_deg: float = Field(default=0.15, ge=0, le=5)
 
 
+class WebSpeedConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+    approach_speed_kmh: float = Field(default=90, ge=20, le=150)
+    superelevation: float = Field(default=0.0, ge=0, le=0.12)
+    reaction_time_s: float = Field(default=2.5, ge=0.5, le=5)
+    deceleration_mps2: float = Field(default=3.4, ge=1, le=8)
+
+
 class AnalyzeRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     route_id: str = Field(min_length=1, max_length=64)
     config: WebConfig = Field(default_factory=WebConfig)
+    speed: WebSpeedConfig = Field(default_factory=WebSpeedConfig)
 
 
 def signal_points(s, signal, valid, budget=2400):
@@ -107,6 +117,17 @@ def samples_csv(analysis):
         yield stream.getvalue()
 
 
+def track_points(result, spacing_m=20.0):
+    """Route centreline with distances, thinned for the drive simulator."""
+    step = max(1, round(spacing_m / float(result.s[1] - result.s[0])))
+    index = np.r_[np.arange(0, len(result.s), step), len(result.s) - 1]
+    index = np.unique(index)
+    return {
+        "s": np.round(result.s[index], 1).tolist(),
+        "lonlat": np.round(result.lonlat[index], 6).tolist(),
+    }
+
+
 def create_app(
     *, cache_dir="cache", route_fetcher=None, osrm_url="https://router.project-osrm.org"
 ):
@@ -146,6 +167,7 @@ def create_app(
     def defaults():
         return {
             "config": WebConfig().model_dump(),
+            "speed_config": WebSpeedConfig().model_dump(),
             "presets": [
                 {
                     "name": "Konya → Ankara",
@@ -215,6 +237,7 @@ def create_app(
             result = analyze_lonlat(
                 record[0]["coordinates"], Config(**body.config.model_dump()), metadata=record[1]
             )
+            assess_speeds(result, SpeedConfig(**body.speed.model_dump()))
         except ValueError as exc:
             raise HTTPException(422, f"Bu rota analiz edilemedi: {exc}") from exc
         collection = geojson(result)
@@ -231,6 +254,7 @@ def create_app(
                 "heading": signal_points(result.s, result.curvature, result.valid),
                 "circle": signal_points(result.s, result.circle_curvature, result.valid),
             },
+            "track": track_points(result),
             "elapsed_ms": round((time.perf_counter() - started) * 1000),
         }
         with cache_lock:
